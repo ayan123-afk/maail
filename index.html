@@ -181,7 +181,7 @@
 </div>
 
 <script>
-// ADD YOUR API KEY HERE
+// Your API Key
 const API_KEY = "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";
 
 // Get prompt from URL parameter
@@ -212,16 +212,16 @@ async function sendMessage(text) {
   input.disabled = true;
 
   try {
-    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": "Bearer " + API_KEY,
+        "Authorization": `Bearer ${API_KEY}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": window.location.href,
+        "HTTP-Referer": window.location.origin || "http://localhost",
         "X-Title": "MA Developers Chatbot"
       },
       body: JSON.stringify({
-        model: "openai/gpt-3.5-turbo",
+        model: "google/gemini-2.0-flash-exp:free",
         messages: [
           { role: "user", content: text }
         ]
@@ -232,27 +232,29 @@ async function sendMessage(text) {
     const loadingMsg = document.getElementById(loadingId);
     if (loadingMsg) loadingMsg.remove();
 
-    const data = await res.json();
+    const data = await response.json();
+    console.log("API Response:", data); // Debug log
 
     if (data.error) {
-      if (data.error.code === 401) {
-        msgBox.innerHTML += `<div class="message error-message">Error: Invalid API key. Please check your API key.</div>`;
-      } else {
-        msgBox.innerHTML += `<div class="message error-message">Error: ${data.error.message}</div>`;
-      }
+      msgBox.innerHTML += `<div class="message error-message">Error: ${data.error.message || JSON.stringify(data.error)}</div>`;
       return;
     }
 
-    const reply = data.choices?.[0]?.message?.content || "No response";
-    msgBox.innerHTML += `<div class="message bot-message">Bot: ${reply}</div>`;
+    if (data.choices && data.choices[0] && data.choices[0].message) {
+      const reply = data.choices[0].message.content;
+      msgBox.innerHTML += `<div class="message bot-message">Bot: ${reply}</div>`;
+    } else {
+      msgBox.innerHTML += `<div class="message error-message">No response from AI</div>`;
+      console.error("Unexpected response:", data);
+    }
 
   } catch (err) {
     // Remove loading message
     const loadingMsg = document.getElementById(loadingId);
     if (loadingMsg) loadingMsg.remove();
     
-    msgBox.innerHTML += `<div class="message error-message">Network error. Please try again.</div>`;
-    console.error(err);
+    msgBox.innerHTML += `<div class="message error-message">Network error: ${err.message}</div>`;
+    console.error("Error:", err);
   } finally {
     // Enable button and input
     sendBtn.disabled = false;
