@@ -2,127 +2,94 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>MA Developers AI Chatbot</title>
+<title>MA AI Chatbot</title>
 
 <style>
-/* ===== GLOBAL ===== */
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: radial-gradient(circle at top, #0a0a2a, #000);
-  color: white;
+body{
+  margin:0;
+  font-family:Arial;
+  background:#000;
+  color:white;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
 }
 
-/* ===== CARD ===== */
-.container {
-  width: 420px;
-  background: rgba(255,255,255,0.06);
-  backdrop-filter: blur(15px);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 20px;
-  box-shadow: 0 0 30px rgba(0,120,255,0.4);
-  overflow: hidden;
+.box{
+  width:420px;
+  background:#111;
+  border-radius:15px;
+  padding:20px;
+  box-shadow:0 0 20px #00f;
 }
 
-/* HEADER */
-.header {
-  padding: 15px;
-  text-align: center;
-  font-size: 18px;
-  font-weight: bold;
-  background: linear-gradient(90deg, #0066ff, #ff00cc);
-}
-
-/* RESPONSE BOX */
-.response {
-  padding: 20px;
-  min-height: 200px;
-  font-size: 16px;
-  line-height: 1.5;
-  white-space: pre-wrap;
-}
-
-/* LOADING */
-.loading {
-  color: #00ffff;
-  animation: blink 1s infinite;
-}
-
-@keyframes blink {
-  50% { opacity: 0.3; }
-}
-
-/* FOOTER */
-.footer {
-  padding: 10px;
-  text-align: center;
-  font-size: 12px;
-  opacity: 0.7;
-  border-top: 1px solid rgba(255,255,255,0.1);
+#response{
+  min-height:200px;
+  white-space:pre-wrap;
 }
 </style>
 </head>
 
 <body>
 
-<div class="container">
-  <div class="header">MA Developers AI Chatbot</div>
-  <div class="response" id="response">Loading...</div>
-  <div class="footer">Powered by MA Developers ⚡</div>
+<div class="box">
+  <h3>MA Developers AI</h3>
+  <div id="response">Loading...</div>
 </div>
 
 <script>
 const API_KEY = "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";
 
-// URL se prompt lena
-const params = new URLSearchParams(window.location.search);
-const prompt = params.get("prompt");
-
+const prompt = new URLSearchParams(window.location.search).get("prompt");
 const box = document.getElementById("response");
 
-async function runAI() {
+async function run(){
 
-  if (!prompt) {
-    box.innerHTML = "❌ No prompt found.<br>Example: ?prompt=hello";
-    return;
-  }
-
-  box.innerHTML = "<span class='loading'>Thinking...</span>";
-
-  try {
-    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": "Bearer " + API_KEY,
-        "Content-Type": "application/json",
-        "HTTP-Referer": location.origin,
-        "X-Title": "MA Developers Chatbot"
-      },
-      body: JSON.stringify({
-        model: "mistralai/mistral-7b-instruct",
-        messages: [
-          { role: "user", content: prompt }
-        ]
-      })
-    });
-
-    const data = await res.json();
-
-    const reply = data.choices?.[0]?.message?.content;
-
-    box.innerHTML = reply ? reply : "⚠️ No response from AI";
-
-  } catch (err) {
-    box.innerHTML = "❌ Error connecting to AI";
-    console.log(err);
-  }
+if(!prompt){
+  box.innerHTML="❌ No prompt found";
+  return;
 }
 
-runAI();
+try{
+
+box.innerHTML="Thinking...";
+
+const res = await fetch("https://openrouter.ai/api/v1/chat/completions",{
+  method:"POST",
+  headers:{
+    "Authorization":"Bearer "+API_KEY,
+    "Content-Type":"application/json",
+    "HTTP-Referer":"https://localhost",
+    "X-Title":"MA Chatbot"
+  },
+  body:JSON.stringify({
+    model:"mistralai/mistral-7b-instruct:free",
+    messages:[
+      {role:"user",content:prompt}
+    ]
+  })
+});
+
+const data = await res.json();
+
+console.log(data); // 👈 IMPORTANT (debug)
+
+if(data.error){
+  box.innerHTML="❌ "+data.error.message;
+  return;
+}
+
+box.innerHTML = data.choices?.[0]?.message?.content || "No reply";
+
+}catch(err){
+box.innerHTML="❌ API failed";
+console.log(err);
+}
+
+}
+
+run();
 </script>
 
 </body>
