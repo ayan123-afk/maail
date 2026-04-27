@@ -2,35 +2,191 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>MA Chatbot</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MA Developers Chatbot</title>
 <style>
-body { background:#0a0a0a; color:white; font-family:sans-serif; }
-.chat { width:350px; margin:50px auto; }
-.messages { height:300px; overflow:auto; border:1px solid #333; padding:10px; }
-input { width:70%; padding:10px; }
-button { padding:10px; }
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+    color: white;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .chat {
+    width: 400px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .chat-header {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #a78bfa;
+    letter-spacing: 2px;
+  }
+
+  .messages {
+    height: 400px;
+    overflow-y: auto;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .messages::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .messages::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+  }
+
+  .messages::-webkit-scrollbar-thumb {
+    background: rgba(167, 139, 250, 0.5);
+    border-radius: 10px;
+  }
+
+  .message {
+    padding: 10px 14px;
+    border-radius: 12px;
+    max-width: 80%;
+    word-wrap: break-word;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .user-message {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    align-self: flex-end;
+    margin-left: auto;
+    border-bottom-right-radius: 4px;
+  }
+
+  .bot-message {
+    background: rgba(255, 255, 255, 0.1);
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+  }
+
+  .error-message {
+    background: rgba(255, 68, 68, 0.2);
+    color: #ff6b6b;
+    align-self: center;
+    font-size: 0.9em;
+  }
+
+  .input-container {
+    display: flex;
+    gap: 10px;
+  }
+
+  input {
+    flex: 1;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 25px;
+    color: white;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.3s ease;
+  }
+
+  input:focus {
+    border-color: #a78bfa;
+    box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.2);
+  }
+
+  input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  button {
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 25px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 14px;
+  }
+
+  button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+  }
+
+  button:active {
+    transform: translateY(0);
+  }
+
+  @media (max-width: 480px) {
+    .chat {
+      width: 95%;
+      margin: 20px;
+    }
+  }
 </style>
 </head>
 <body>
 
 <div class="chat">
+  <div class="chat-header">MA Developers Chatbot</div>
   <div class="messages" id="messages"></div>
-  <input id="input" placeholder="Type..." />
-  <button onclick="send()">Send</button>
+  <div class="input-container">
+    <input id="input" placeholder="Type your message..." />
+    <button onclick="send()">Send</button>
+  </div>
 </div>
 
 <script>
-const API_KEY = "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";
+const API_KEY = "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";
 
-async function send() {
-  const input = document.getElementById("input");
+// Get prompt from URL parameter
+function getPromptFromURL() {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get('prompt');
+}
+
+// Send message and get bot response
+async function sendMessage(text) {
   const msgBox = document.getElementById("messages");
-
-  const text = input.value;
+  
   if (!text) return;
 
-  msgBox.innerHTML += "<div>You: " + text + "</div>";
-  input.value = "";
+  // Add user message
+  msgBox.innerHTML += `<div class="message user-message">You: ${text}</div>`;
+
+  // Auto scroll to bottom
+  msgBox.scrollTop = msgBox.scrollHeight;
 
   try {
     const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -38,11 +194,11 @@ async function send() {
       headers: {
         "Authorization": "Bearer " + API_KEY,
         "Content-Type": "application/json",
-        "HTTP-Referer": "http://localhost",   // important
-        "X-Title": "MA Chatbot"
+        "HTTP-Referer": window.location.href,
+        "X-Title": "MA Developers Chatbot"
       },
       body: JSON.stringify({
-        model: "openai/gpt-3.5-turbo",  // change model (more stable)
+        model: "openai/gpt-3.5-turbo",
         messages: [
           { role: "user", content: text }
         ]
@@ -52,17 +208,68 @@ async function send() {
     const data = await res.json();
 
     if (data.error) {
-      msgBox.innerHTML += "<div style='color:red'>Error: " + data.error.message + "</div>";
+      msgBox.innerHTML += `<div class="message error-message">Error: ${data.error.message}</div>`;
       return;
     }
 
     const reply = data.choices?.[0]?.message?.content || "No response";
-
-    msgBox.innerHTML += "<div style='color:lightgreen'>Bot: " + reply + "</div>";
+    msgBox.innerHTML += `<div class="message bot-message">Bot: ${reply}</div>`;
 
   } catch (err) {
-    msgBox.innerHTML += "<div style='color:red'>Request Failed</div>";
+    msgBox.innerHTML += `<div class="message error-message">Request Failed</div>`;
     console.error(err);
+  }
+
+  // Auto scroll to bottom
+  msgBox.scrollTop = msgBox.scrollHeight;
+}
+
+// Send button click handler
+function send() {
+  const input = document.getElementById("input");
+  const text = input.value.trim();
+  if (text) {
+    sendMessage(text);
+    input.value = "";
+  }
+}
+
+// Allow sending with Enter key
+document.getElementById("input").addEventListener("keypress", function(e) {
+  if (e.key === "Enter") {
+    send();
+  }
+});
+
+// Process URL prompt on page load
+function processURLPrompt() {
+  const prompt = getPromptFromURL();
+  if (prompt) {
+    sendMessage(decodeURIComponent(prompt));
+    
+    // Update URL without reloading (remove prompt parameter)
+    if (window.history && window.history.replaceState) {
+      const newURL = window.location.pathname;
+      window.history.replaceState({}, document.title, newURL);
+    }
+  }
+}
+
+// Run when page loads
+window.addEventListener('load', function() {
+  processURLPrompt();
+  
+  // Also listen for hash changes (for SPA-like behavior)
+  window.addEventListener('hashchange', function() {
+    processURLPrompt();
+  });
+});
+
+// Update URL when user sends a message (optional)
+function updateURLWithPrompt(prompt) {
+  if (window.history && window.history.pushState) {
+    const newURL = window.location.pathname + '?prompt=' + encodeURIComponent(prompt);
+    window.history.pushState({}, document.title, newURL);
   }
 }
 </script>
