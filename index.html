@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MA Chatbot</title>
+<title>MA Developers Chatbot</title>
 <style>
   * {
     margin: 0;
@@ -99,6 +99,13 @@
     font-size: 0.9em;
   }
 
+  .loading-message {
+    background: rgba(255, 255, 255, 0.1);
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+    color: #a78bfa;
+  }
+
   .input-container {
     display: flex;
     gap: 10px;
@@ -148,6 +155,12 @@
     transform: translateY(0);
   }
 
+  button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
   @media (max-width: 480px) {
     .chat {
       width: 95%;
@@ -159,30 +172,44 @@
 <body>
 
 <div class="chat">
-  <div class="chat-header">MA Chatbot</div>
+  <div class="chat-header">MA Developers Chatbot</div>
   <div class="messages" id="messages"></div>
   <div class="input-container">
     <input id="input" placeholder="Type your message..." />
-    <button onclick="send()">Send</button>
+    <button id="sendBtn" onclick="send()">Send</button>
   </div>
 </div>
 
 <script>
-const API_KEY = "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";
+// ADD YOUR API KEY HERE
+const API_KEY = "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"; // Replace with your actual API key
 
-async function send() {
-  const input = document.getElementById("input");
+// Get prompt from URL parameter
+function getPromptFromURL() {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get('prompt');
+}
+
+// Send message to AI
+async function sendMessage(text) {
   const msgBox = document.getElementById("messages");
-
-  const text = input.value.trim();
+  const sendBtn = document.getElementById("sendBtn");
+  const input = document.getElementById("input");
+  
   if (!text) return;
 
   // Add user message
   msgBox.innerHTML += `<div class="message user-message">You: ${text}</div>`;
-  input.value = "";
-
-  // Auto scroll to bottom
   msgBox.scrollTop = msgBox.scrollHeight;
+
+  // Add loading message
+  const loadingId = "loading-" + Date.now();
+  msgBox.innerHTML += `<div class="message loading-message" id="${loadingId}">Bot: Thinking...</div>`;
+  msgBox.scrollTop = msgBox.scrollHeight;
+
+  // Disable button and input while loading
+  sendBtn.disabled = true;
+  input.disabled = true;
 
   try {
     const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -190,8 +217,8 @@ async function send() {
       headers: {
         "Authorization": "Bearer " + API_KEY,
         "Content-Type": "application/json",
-        "HTTP-Referer": "http://localhost",
-        "X-Title": "MA Chatbot"
+        "HTTP-Referer": window.location.href,
+        "X-Title": "MA Developers Chatbot"
       },
       body: JSON.stringify({
         model: "openai/gpt-3.5-turbo",
@@ -201,30 +228,62 @@ async function send() {
       })
     });
 
+    // Remove loading message
+    const loadingMsg = document.getElementById(loadingId);
+    if (loadingMsg) loadingMsg.remove();
+
     const data = await res.json();
 
     if (data.error) {
-      msgBox.innerHTML += `<div class="message error-message">Error: ${data.error.message}</div>`;
+      if (data.error.code === 401) {
+        msgBox.innerHTML += `<div class="message error-message">Error: Invalid API key. Please check your API key.</div>`;
+      } else {
+        msgBox.innerHTML += `<div class="message error-message">Error: ${data.error.message}</div>`;
+      }
       return;
     }
 
     const reply = data.choices?.[0]?.message?.content || "No response";
-
     msgBox.innerHTML += `<div class="message bot-message">Bot: ${reply}</div>`;
 
   } catch (err) {
-    msgBox.innerHTML += `<div class="message error-message">Request Failed</div>`;
+    // Remove loading message
+    const loadingMsg = document.getElementById(loadingId);
+    if (loadingMsg) loadingMsg.remove();
+    
+    msgBox.innerHTML += `<div class="message error-message">Network error. Please try again.</div>`;
     console.error(err);
+  } finally {
+    // Enable button and input
+    sendBtn.disabled = false;
+    input.disabled = false;
+    input.focus();
+    msgBox.scrollTop = msgBox.scrollHeight;
   }
+}
 
-  // Auto scroll to bottom
-  msgBox.scrollTop = msgBox.scrollHeight;
+// Send button click handler
+function send() {
+  const input = document.getElementById("input");
+  const text = input.value.trim();
+  if (text) {
+    sendMessage(text);
+    input.value = "";
+  }
 }
 
 // Allow sending with Enter key
 document.getElementById("input").addEventListener("keypress", function(e) {
   if (e.key === "Enter") {
     send();
+  }
+});
+
+// Process URL prompt on page load
+window.addEventListener('load', function() {
+  const prompt = getPromptFromURL();
+  if (prompt) {
+    sendMessage(decodeURIComponent(prompt));
   }
 });
 </script>
