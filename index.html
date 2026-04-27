@@ -2,94 +2,69 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>MA AI Chatbot</title>
-
+<title>MA Chatbot</title>
 <style>
-body{
-  margin:0;
-  font-family:Arial;
-  background:#000;
-  color:white;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-}
-
-.box{
-  width:420px;
-  background:#111;
-  border-radius:15px;
-  padding:20px;
-  box-shadow:0 0 20px #00f;
-}
-
-#response{
-  min-height:200px;
-  white-space:pre-wrap;
-}
+body { background:#0a0a0a; color:white; font-family:sans-serif; }
+.chat { width:350px; margin:50px auto; }
+.messages { height:300px; overflow:auto; border:1px solid #333; padding:10px; }
+input { width:70%; padding:10px; }
+button { padding:10px; }
 </style>
 </head>
-
 <body>
 
-<div class="box">
-  <h3>MA Developers AI</h3>
-  <div id="response">Loading...</div>
+<div class="chat">
+  <div class="messages" id="messages"></div>
+  <input id="input" placeholder="Type..." />
+  <button onclick="send()">Send</button>
 </div>
 
 <script>
 const API_KEY = "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";
 
-const prompt = new URLSearchParams(window.location.search).get("prompt");
-const box = document.getElementById("response");
+async function send() {
+  const input = document.getElementById("input");
+  const msgBox = document.getElementById("messages");
 
-async function run(){
+  const text = input.value;
+  if (!text) return;
 
-if(!prompt){
-  box.innerHTML="❌ No prompt found";
-  return;
+  msgBox.innerHTML += "<div>You: " + text + "</div>";
+  input.value = "";
+
+  try {
+    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + API_KEY,
+        "Content-Type": "application/json",
+        "HTTP-Referer": "http://localhost",   // important
+        "X-Title": "MA Chatbot"
+      },
+      body: JSON.stringify({
+        model: "openai/gpt-3.5-turbo",  // change model (more stable)
+        messages: [
+          { role: "user", content: text }
+        ]
+      })
+    });
+
+    const data = await res.json();
+
+    if (data.error) {
+      msgBox.innerHTML += "<div style='color:red'>Error: " + data.error.message + "</div>";
+      return;
+    }
+
+    const reply = data.choices?.[0]?.message?.content || "No response";
+
+    msgBox.innerHTML += "<div style='color:lightgreen'>Bot: " + reply + "</div>";
+
+  } catch (err) {
+    msgBox.innerHTML += "<div style='color:red'>Request Failed</div>";
+    console.error(err);
+  }
 }
-
-try{
-
-box.innerHTML="Thinking...";
-
-const res = await fetch("https://openrouter.ai/api/v1/chat/completions",{
-  method:"POST",
-  headers:{
-    "Authorization":"Bearer "+API_KEY,
-    "Content-Type":"application/json",
-    "HTTP-Referer":"https://localhost",
-    "X-Title":"MA Chatbot"
-  },
-  body:JSON.stringify({
-    model:"mistralai/mistral-7b-instruct:free",
-    messages:[
-      {role:"user",content:prompt}
-    ]
-  })
-});
-
-const data = await res.json();
-
-console.log(data); // 👈 IMPORTANT (debug)
-
-if(data.error){
-  box.innerHTML="❌ "+data.error.message;
-  return;
-}
-
-box.innerHTML = data.choices?.[0]?.message?.content || "No reply";
-
-}catch(err){
-box.innerHTML="❌ API failed";
-console.log(err);
-}
-
-}
-
-run();
 </script>
 
 </body>
