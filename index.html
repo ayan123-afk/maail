@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MA Developers Chatbot</title>
+<title>MA Chatbot</title>
 <style>
   * {
     margin: 0;
@@ -159,7 +159,7 @@
 <body>
 
 <div class="chat">
-  <div class="chat-header">MA Developers Chatbot</div>
+  <div class="chat-header">MA Chatbot</div>
   <div class="messages" id="messages"></div>
   <div class="input-container">
     <input id="input" placeholder="Type your message..." />
@@ -170,20 +170,16 @@
 <script>
 const API_KEY = "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";
 
-// Get prompt from URL parameter
-function getPromptFromURL() {
-  const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get('prompt');
-}
-
-// Send message and get bot response
-async function sendMessage(text) {
+async function send() {
+  const input = document.getElementById("input");
   const msgBox = document.getElementById("messages");
-  
+
+  const text = input.value.trim();
   if (!text) return;
 
   // Add user message
   msgBox.innerHTML += `<div class="message user-message">You: ${text}</div>`;
+  input.value = "";
 
   // Auto scroll to bottom
   msgBox.scrollTop = msgBox.scrollHeight;
@@ -194,8 +190,8 @@ async function sendMessage(text) {
       headers: {
         "Authorization": "Bearer " + API_KEY,
         "Content-Type": "application/json",
-        "HTTP-Referer": window.location.href,
-        "X-Title": "MA Developers Chatbot"
+        "HTTP-Referer": "http://localhost",
+        "X-Title": "MA Chatbot"
       },
       body: JSON.stringify({
         model: "openai/gpt-3.5-turbo",
@@ -213,6 +209,7 @@ async function sendMessage(text) {
     }
 
     const reply = data.choices?.[0]?.message?.content || "No response";
+
     msgBox.innerHTML += `<div class="message bot-message">Bot: ${reply}</div>`;
 
   } catch (err) {
@@ -224,54 +221,12 @@ async function sendMessage(text) {
   msgBox.scrollTop = msgBox.scrollHeight;
 }
 
-// Send button click handler
-function send() {
-  const input = document.getElementById("input");
-  const text = input.value.trim();
-  if (text) {
-    sendMessage(text);
-    input.value = "";
-  }
-}
-
 // Allow sending with Enter key
 document.getElementById("input").addEventListener("keypress", function(e) {
   if (e.key === "Enter") {
     send();
   }
 });
-
-// Process URL prompt on page load
-function processURLPrompt() {
-  const prompt = getPromptFromURL();
-  if (prompt) {
-    sendMessage(decodeURIComponent(prompt));
-    
-    // Update URL without reloading (remove prompt parameter)
-    if (window.history && window.history.replaceState) {
-      const newURL = window.location.pathname;
-      window.history.replaceState({}, document.title, newURL);
-    }
-  }
-}
-
-// Run when page loads
-window.addEventListener('load', function() {
-  processURLPrompt();
-  
-  // Also listen for hash changes (for SPA-like behavior)
-  window.addEventListener('hashchange', function() {
-    processURLPrompt();
-  });
-});
-
-// Update URL when user sends a message (optional)
-function updateURLWithPrompt(prompt) {
-  if (window.history && window.history.pushState) {
-    const newURL = window.location.pathname + '?prompt=' + encodeURIComponent(prompt);
-    window.history.pushState({}, document.title, newURL);
-  }
-}
 </script>
 
 </body>
