@@ -1,75 +1,65 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>AI Chatbot</title>
+<meta charset="UTF-8">
+<title>Pollution AI Chatbot</title>
+
 <style>
 body {
-  font-family: Arial;
-  background: #0f172a;
-  color: white;
-  display: flex;
-  justify-content: center;
-  margin-top: 50px;
+  background:#0f172a;
+  color:white;
+  font-family:Arial;
+  text-align:center;
+  padding:40px;
 }
-
 .box {
-  width: 420px;
-  background: #111827;
-  padding: 20px;
-  border-radius: 10px;
-}
-
-#chat {
-  height: 400px;
-  overflow-y: auto;
-  border: 1px solid #333;
-  padding: 10px;
-  margin-bottom: 10px;
-}
-
-input {
-  width: 75%;
-  padding: 10px;
-}
-
-button {
-  padding: 10px;
-  background: #3b82f6;
-  border: none;
-  color: white;
+  background:#1e293b;
+  padding:20px;
+  border-radius:10px;
+  max-width:500px;
+  margin:auto;
 }
 </style>
-</head>
 
+</head>
 <body>
 
 <div class="box">
-  <h2>🔎 Working Chatbot</h2>
-
-  <div id="chat"></div>
-
-  <input id="input">
-  <button onclick="send()">Send</button>
+  <h2>🌍 Pollution AI Chatbot</h2>
+  <p id="prompt"></p>
+  <div id="result">Loading...</div>
 </div>
 
 <script>
-async function send() {
-    let input = document.getElementById("input");
-    let chat = document.getElementById("chat");
+const params = new URLSearchParams(window.location.search);
+const prompt = params.get("prompt");
 
-    let msg = input.value;
-    if (!msg) return;
+document.getElementById("prompt").innerText =
+  "Prompt: " + (prompt || "None");
 
-    chat.innerHTML += `<div>You: ${msg}</div>`;
-    input.value = "";
+async function run() {
+  const box = document.getElementById("result");
 
-    chat.innerHTML += `<div>Bot: searching...</div>`;
+  if (!prompt) {
+    box.innerText = "No prompt provided";
+    return;
+  }
 
-    let res = await fetch("http://localhost:3000/search?q=" + msg);
-    let data = await res.json();
+  try {
+    const res = await fetch(
+      "/api?prompt=" + encodeURIComponent(prompt)
+    );
 
-    chat.innerHTML += `<div>Bot: ${data.answer}</div>`;
+    const text = await res.text();
+
+    box.innerText = text;
+
+  } catch (e) {
+    box.innerText = "Error: " + e.message;
+  }
 }
+
+run();
 </script>
 
 </body>
