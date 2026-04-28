@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
 <title>AI Chatbot</title>
@@ -12,21 +12,33 @@
 
 <script>
 const params = new URLSearchParams(window.location.search);
-const prompt = params.get("prompt") || "hello";
+const prompt = params.get("prompt");
 
 async function run() {
+  const box = document.getElementById("result");
+
+  if (!prompt) {
+    box.innerText = "No prompt provided";
+    return;
+  }
+
   try {
-    const res = await fetch(
-      "https://text.pollinations.ai/" + encodeURIComponent(prompt)
-    );
+    const url = "https://text.pollinations.ai/" + encodeURIComponent(prompt);
+
+    console.log("Calling:", url);
+
+    const res = await fetch(url);
+
+    if (!res.ok) {
+      throw new Error("API failed: " + res.status);
+    }
 
     const text = await res.text();
 
-    document.getElementById("result").innerText = text;
+    box.innerText = text;
 
   } catch (err) {
-    document.getElementById("result").innerText =
-      "Error: " + err.message;
+    box.innerText = "Error: " + err.message;
   }
 }
 
