@@ -11,34 +11,22 @@
 <div id="result">Loading...</div>
 
 <script>
-const params = new URLSearchParams(window.location.search);
-const prompt = params.get("prompt");
+const prompt = new URLSearchParams(window.location.search).get("prompt");
 
 async function run() {
-  const box = document.getElementById("result");
-
   if (!prompt) {
-    box.innerText = "No prompt provided";
+    document.getElementById("result").innerText = "No prompt";
     return;
   }
 
   try {
-    const url = "https://text.pollinations.ai/" + encodeURIComponent(prompt);
-
-    console.log("Calling:", url);
-
-    const res = await fetch(url);
-
-    if (!res.ok) {
-      throw new Error("API failed: " + res.status);
-    }
-
+    const res = await fetch("/api?prompt=" + encodeURIComponent(prompt));
     const text = await res.text();
 
-    box.innerText = text;
+    document.getElementById("result").innerText = text;
 
-  } catch (err) {
-    box.innerText = "Error: " + err.message;
+  } catch (e) {
+    document.getElementById("result").innerText = "Error: " + e.message;
   }
 }
 
