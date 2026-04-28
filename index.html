@@ -1,62 +1,23 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>Pollution AI Chatbot</title>
-
-<style>
-body {
-  background:#0f172a;
-  color:white;
-  font-family:Arial;
-  text-align:center;
-  padding:40px;
-}
-.box {
-  background:#1e293b;
-  padding:20px;
-  border-radius:10px;
-  max-width:500px;
-  margin:auto;
-}
-</style>
-
+<title>AI Chat</title>
 </head>
-<body>
+<body style="background:#0f172a;color:white;text-align:center;padding:40px;">
 
-<div class="box">
-  <h2>🌍 Pollution AI Chatbot</h2>
-  <p id="prompt"></p>
-  <div id="result">Loading...</div>
-</div>
+<h2>🌍 AI Chatbot</h2>
+<div id="result">Loading...</div>
 
 <script>
 const params = new URLSearchParams(window.location.search);
-const prompt = params.get("prompt");
-
-document.getElementById("prompt").innerText =
-  "Prompt: " + (prompt || "None");
+const prompt = params.get("prompt") || "hello";
 
 async function run() {
-  const box = document.getElementById("result");
+  const res = await fetch("https://text.pollinations.ai/" + encodeURIComponent(prompt));
+  const text = await res.text();
 
-  if (!prompt) {
-    box.innerText = "No prompt provided";
-    return;
-  }
-
-  try {
-    const res = await fetch(
-      "/api?prompt=" + encodeURIComponent(prompt)
-    );
-
-    const text = await res.text();
-
-    box.innerText = text;
-
-  } catch (e) {
-    box.innerText = "Error: " + e.message;
-  }
+  document.getElementById("result").innerText = text;
 }
 
 run();
