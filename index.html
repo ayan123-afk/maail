@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>AI Chat</title>
+<title>AI Chatbot</title>
 </head>
+
 <body style="background:#0f172a;color:white;text-align:center;padding:40px;">
 
 <h2>🌍 AI Chatbot</h2>
@@ -14,10 +15,19 @@ const params = new URLSearchParams(window.location.search);
 const prompt = params.get("prompt") || "hello";
 
 async function run() {
-  const res = await fetch("https://text.pollinations.ai/" + encodeURIComponent(prompt));
-  const text = await res.text();
+  try {
+    const res = await fetch(
+      "https://text.pollinations.ai/" + encodeURIComponent(prompt)
+    );
 
-  document.getElementById("result").innerText = text;
+    const text = await res.text();
+
+    document.getElementById("result").innerText = text;
+
+  } catch (err) {
+    document.getElementById("result").innerText =
+      "Error: " + err.message;
+  }
 }
 
 run();
